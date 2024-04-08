@@ -1142,4 +1142,101 @@ export namespace structuredDataCapture {
     export function addPreferredTerminologyServer(element: fhir4.Element, value: string) {
         return extensionHelpers.addExtension(element, { url: exturl_PreferredTerminologyServer, valueUrl: value });
     }
+
+    // ----------------------------------------------------------------------
+    // Lookup questionnaire item via linkId within a questionnaire
+    // BackboneElement(0..1)
+    export function getQuestionnaireItem(
+        questionnaire: fhir4.Questionnaire,
+        targetLinkId: string
+    ): fhir4.QuestionnaireItem | undefined {
+        // Search through the top level items recursively
+        const topLevelQItems = questionnaire.item;
+        if (topLevelQItems) {
+            for (const topLevelQItem of topLevelQItems) {
+                const foundQItem = getQuestionnaireItemRecursive(topLevelQItem, targetLinkId);
+
+                if (foundQItem) {
+                    return foundQItem;
+                }
+            }
+        }
+
+        // No matching item found in the questionnaire
+        return undefined;
+    }
+
+    function getQuestionnaireItemRecursive(
+        qItem: fhir4.QuestionnaireItem,
+        targetLinkId: string
+    ): fhir4.QuestionnaireItem | undefined {
+        // Target linkId found in current item, return the item
+        if (qItem.linkId === targetLinkId) {
+            return qItem;
+        }
+
+        // Search through its child items recursively
+        const childQItems = qItem.item;
+        if (childQItems) {
+            for (const childQItem of childQItems) {
+                const foundQItem = getQuestionnaireItemRecursive(childQItem, targetLinkId);
+
+                if (foundQItem) {
+                    return foundQItem;
+                }
+            }
+        }
+
+        // No matching item found in the current item or its child items
+        return undefined;
+    }
+
+    // ----------------------------------------------------------------------
+    // Lookup parent item of a target item via the latter's linkId within a questionnaire
+    // BackboneElement(0..1)
+    export function getParentItem(
+        questionnaire: fhir4.Questionnaire,
+        targetLinkId: string
+    ): fhir4.QuestionnaireItem | undefined {
+        // Search through the top level items recursively
+        const topLevelQItems = questionnaire.item;
+        if (topLevelQItems) {
+            for (const topLevelQItem of topLevelQItems) {
+                const foundParentQItem = getParentItemRecursive(topLevelQItem, targetLinkId);
+
+                if (foundParentQItem) {
+                    return foundParentQItem;
+                }
+            }
+        }
+
+        // No matching parent item found in the questionnaire
+        return undefined;
+    }
+
+    function getParentItemRecursive(
+        qItem: fhir4.QuestionnaireItem,
+        targetLinkId: string,
+        parentQItem?: fhir4.QuestionnaireItem
+    ): fhir4.QuestionnaireItem | undefined {
+        // Current item has the target linkId, return the parent item if it exists
+        if (qItem.linkId === targetLinkId) {
+            return parentQItem ?? undefined;
+        }
+
+        // Search through its child items recursively
+        const childQItems = qItem.item;
+        if (childQItems) {
+            for (const childQItem of childQItems) {
+                const foundParentQItem = getParentItemRecursive(childQItem, targetLinkId, qItem);
+
+                if (foundParentQItem) {
+                    return foundParentQItem;
+                }
+            }
+        }
+
+        // No matching parent item found in the current item or its child items
+        return undefined;
+    }
 }

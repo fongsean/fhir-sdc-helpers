@@ -1,5 +1,6 @@
 import exHelpers from 'fhir-extension-helpers';
 import { structuredDataCapture } from '../structureddatacapture-r4';
+import { questionnaireTest } from "./questionnaire-test";
 
 test('get/set/clear hidden value', () => {
     let item: fhir4.QuestionnaireItem = { type: 'string', linkId: 's', text: 'Smile' };
@@ -18,5 +19,23 @@ test('get/set/clear hidden value', () => {
     exHelpers.clearExtension(item, structuredDataCapture.exturl_Hidden);
     expect(JSON.stringify(item)).toBe('{"type":"string","linkId":"s","text":"Smile"}');
     expect(structuredDataCapture.getHidden(item)).toBe(undefined);
+})
+
+test('get target item linkId', () => {
+    const questionnaire: fhir4.Questionnaire = questionnaireTest;
+
+    expect(structuredDataCapture.getQuestionnaireItem(questionnaire, "non-existent-item")).toBe(undefined);
+
+    expect(structuredDataCapture.getQuestionnaireItem(questionnaire, "string-1")?.linkId).toBe("string-1");
+})
+
+
+test('get parent item linkId', () => {
+    const questionnaire: fhir4.Questionnaire = questionnaireTest;
+
+    expect(structuredDataCapture.getParentItem(questionnaire, "container")).toBe(undefined);
+
+    expect(structuredDataCapture.getParentItem(questionnaire, "string-1")?.linkId).toBe("container");
+
 })
 
